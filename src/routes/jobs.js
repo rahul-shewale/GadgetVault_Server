@@ -5,7 +5,10 @@ const { uploadCsv } = require('../middlewares/upload');
 
 const router = express.Router();
 
-// All job routes require auth
+// Download completed report (public, no auth)
+router.get('/:id/download', downloadReport);
+
+// All other job routes require auth
 router.use(authMiddleware);
 
 // Bulk upload: POST with CSV file in form-data field "file"
@@ -17,8 +20,5 @@ router.post('/report', triggerReport);
 
 // Poll job status
 router.get('/:id', getJobStatus);
-
-// Download completed report
-router.get('/:id/download', downloadReport);
 
 module.exports = router;

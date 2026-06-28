@@ -95,10 +95,19 @@ const bulkUploadWorker = new Worker('bulk-upload', async (bullJob) => {
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
   const finalStatus = errors.length === rows.length ? 'failed' : 'done';
+  // Generate a CSV summary for the bulk upload job
+  const reportsDir = path.join(__dirname, '../uploads/reports');
+  if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true });
+  const summaryFilename = `bulk-upload-${jobId}-${Date.now()}.csv`;
+  const summaryPath = path.join(reportsDir, summaryFilename);
+  const csvHeaders = 'jobId,total_rows,processed_rows,status,error';
+  const csvRow = `${jobId},${rows.length},${processed},${finalStatus},"${errors.map(e => e.replace(/"/g, '""')).join(' | ')}"`;
+  fs.writeFileSync(summaryPath, `${csvHeaders}\n${csvRow}`);
   await Job.update({
     status: finalStatus,
     processed_rows: processed,
     error: errors.length > 0 ? errors.slice(0, 10).join('\n') : null,
+    result_path: summaryPath,
   }, { where: { id: jobId } });
 
   console.log(`[BulkWorker] Job ${jobId} completed with status: ${finalStatus}`);

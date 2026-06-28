@@ -115,13 +115,20 @@ const getJobStatus = async (req, res) => {
 // ─── Download report file ─────────────────────────────────────────────────────
 const downloadReport = async (req, res) => {
   try {
-    const job = await Job.findByPk(req.params.id);
+    console.log(req);     
+    const { id } = req.params;
+    console.log(id);
 
-    if (!job || job.type !== 'report') {
-      return res.status(404).json({ success: false, message: 'Report job not found' });
+    const job = await Job.findByPk(id);
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+    if (!job.result_path) {
+      return res.status(404).json({ success: false, message: 'Result file not found for this job' });
     }
     if (job.status !== 'done') {
-      return res.status(400).json({ success: false, message: `Report not ready. Status: ${job.status}` });
+      return res.status(400).json({ success: false, message: `Job not ready. Status: ${job.status}` });
     }
 
     const filePath = path.resolve(job.result_path);
